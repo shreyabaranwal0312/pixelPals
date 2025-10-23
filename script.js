@@ -36,6 +36,40 @@ let unsubscribe = null;
 // Firestore reference
 const canvasDocRef = db.collection('canvases').doc('shared');
 
+// Helper Functions for Firestore
+function gridToFirestore(grid) {
+  // Convert 2D array to flat array with position data
+  const flatGrid = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (grid[r][c] !== '#081226') { // Only store non-background pixels
+        flatGrid.push({
+          r: r,
+          c: c,
+          color: grid[r][c]
+        });
+      }
+    }
+  }
+  return flatGrid;
+}
+
+function firestoreToGrid(flatGrid) {
+  // Create empty grid
+  const newGrid = Array.from({ length: rows }, () => Array(cols).fill('#081226'));
+  
+  // Fill in the pixels
+  if (flatGrid && Array.isArray(flatGrid)) {
+    flatGrid.forEach(pixel => {
+      if (pixel.r >= 0 && pixel.r < rows && pixel.c >= 0 && pixel.c < cols) {
+        newGrid[pixel.r][pixel.c] = pixel.color;
+      }
+    });
+  }
+  
+  return newGrid;
+}
+
 // Authentication Functions
 async function signUp() {
   const email = emailInput.value.trim();
@@ -217,8 +251,10 @@ function saveToFirebaseDebounced() {
   saveTimeout = setTimeout(async () => {
     if (!currentUser) return;
     try {
+      const flatGrid = gridToFirestore(grid);
       await canvasDocRef.set({ 
-        grid,
+        pixels: flatGrid,
+        dimensions: { rows, cols },
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
         updatedBy: currentUser.email
       });
@@ -236,8 +272,10 @@ async function saveCanvas() {
   }
   
   try {
+    const flatGrid = gridToFirestore(grid);
     await canvasDocRef.set({ 
-      grid,
+      pixels: flatGrid,
+      dimensions: { rows, cols },
       lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
       updatedBy: currentUser.email
     });
@@ -258,7 +296,8 @@ async function loadCanvas() {
   try {
     const doc = await canvasDocRef.get();
     if (doc.exists) {
-      grid = doc.data().grid;
+      const data = doc.data();
+      grid = firestoreToGrid(data.pixels);
       renderGrid();
       alert('Canvas loaded successfully!');
     } else {
@@ -277,7 +316,7 @@ function setupRealtimeSync() {
     if (doc.exists) {
       const data = doc.data();
       if (data.updatedBy && data.updatedBy !== currentUser.email) {
-        grid = data.grid;
+        grid = firestoreToGrid(data.pixels);
         renderGrid();
       }
       updateConnectionStatus(true);
@@ -294,15 +333,20 @@ async function initializeCanvas() {
   try {
     const doc = await canvasDocRef.get();
     if (doc.exists) {
-      grid = doc.data().grid;
+      const data = doc.data();
+      grid = firestoreToGrid(data.pixels);
+      renderGrid();
     } else {
+      // Create initial empty canvas
+      const flatGrid = gridToFirestore(grid);
       await canvasDocRef.set({ 
-        grid,
+        pixels: flatGrid,
+        dimensions: { rows, cols },
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
         updatedBy: currentUser.email
       });
+      renderGrid();
     }
-    renderGrid();
   } catch (error) {
     console.error('Initialization error:', error);
     renderGrid();
