@@ -1,12 +1,14 @@
 // Firebase configuration
 // IMPORTANT: Replace these values with your actual Firebase project configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDwT3bA9YhV2QLxdEfQhzgxwsXzO39qT34",
+  authDomain: "pixelpals-d30df.firebaseapp.com",
+  databaseURL: "https://pixelpals-d30df-default-rtdb.firebaseio.com",
+  projectId: "pixelpals-d30df",
+  storageBucket: "pixelpals-d30df.firebasestorage.app",
+  messagingSenderId: "516544089791",
+  appId: "1:516544089791:web:9f9aeeee9b01699b2d400a",
+  measurementId: "G-8Z1C1GEZR1"
 };
 
 // Initialize Firebase
