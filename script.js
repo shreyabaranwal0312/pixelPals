@@ -1,36 +1,3 @@
-// Import Firebase modules
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { 
-  getAuth, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { 
-  getFirestore, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  onSnapshot 
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDwT3bA9YhV2QLxdEfQhzgxwsXzO39qT34",
-  authDomain: "pixelpals-d30df.firebaseapp.com",
-  databaseURL: "https://pixelpals-d30df-default-rtdb.firebaseio.com",
-  projectId: "pixelpals-d30df",
-  storageBucket: "pixelpals-d30df.firebasestorage.app",
-  messagingSenderId: "516544089791",
-  appId: "1:516544089791:web:9f9aeeee9b01699b2d400a",
-  measurementId: "G-8Z1C1GEZR1"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
 // DOM Elements
 const authModal = document.getElementById('authModal');
 const appContent = document.getElementById('appContent');
@@ -67,7 +34,7 @@ let currentUser = null;
 let unsubscribe = null;
 
 // Firestore reference
-const canvasDocRef = doc(db, 'canvases', 'shared');
+const canvasDocRef = db.collection('canvases').doc('shared');
 
 // Authentication Functions
 async function signUp() {
@@ -78,12 +45,20 @@ async function signUp() {
     showError('Please enter email and password');
     return;
   }
+
+  if (password.length < 6) {
+    showError('Password should be at least 6 characters');
+    return;
+  }
   
   try {
-    await createUserWithEmailAndPassword(auth, email, password);
+    showError('Creating account...');
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    console.log('User created:', userCredential.user.email);
     authError.textContent = '';
   } catch (error) {
-    showError(error.message);
+    console.error('Signup error:', error);
+    showError(getErrorMessage(error.code));
   }
 }
 
@@ -97,33 +72,63 @@ async function login() {
   }
   
   try {
-    await signInWithEmailAndPassword(auth, email, password);
+    showError('Logging in...');
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+    console.log('User logged in:', userCredential.user.email);
     authError.textContent = '';
   } catch (error) {
-    showError(error.message);
+    console.error('Login error:', error);
+    showError(getErrorMessage(error.code));
   }
 }
 
 async function logout() {
   try {
-    await signOut(auth);
+    await auth.signOut();
+    console.log('User logged out');
   } catch (error) {
     console.error('Logout error:', error);
   }
 }
 
+function getErrorMessage(errorCode) {
+  switch (errorCode) {
+    case 'auth/email-already-in-use':
+      return 'Email is already registered';
+    case 'auth/weak-password':
+      return 'Password is too weak (min 6 characters)';
+    case 'auth/invalid-email':
+      return 'Invalid email address';
+    case 'auth/user-not-found':
+      return 'No user found with this email';
+    case 'auth/wrong-password':
+      return 'Incorrect password';
+    case 'auth/network-request-failed':
+      return 'Network error - check your connection';
+    case 'auth/too-many-requests':
+      return 'Too many failed attempts. Try again later';
+    case 'auth/operation-not-allowed':
+      return 'Email/password auth not enabled in Firebase';
+    default:
+      return errorCode || 'Authentication error';
+  }
+}
+
 function showError(message) {
   authError.textContent = message;
-  setTimeout(() => {
-    authError.textContent = '';
-  }, 5000);
+  if (message !== 'Creating account...' && message !== 'Logging in...') {
+    setTimeout(() => {
+      authError.textContent = '';
+    }, 5000);
+  }
 }
 
 // Auth state observer
-onAuthStateChanged(auth, (user) => {
+auth.onAuthStateChanged((user) => {
   currentUser = user;
   
   if (user) {
+    console.log('User authenticated:', user.email);
     authModal.style.display = 'none';
     appContent.style.display = 'block';
     userEmail.textContent = user.email;
@@ -132,6 +137,7 @@ onAuthStateChanged(auth, (user) => {
     setupRealtimeSync();
     updateConnectionStatus(true);
   } else {
+    console.log('User not authenticated');
     authModal.style.display = 'flex';
     appContent.style.display = 'none';
     userEmail.textContent = '';
@@ -209,39 +215,50 @@ let saveTimeout;
 function saveToFirebaseDebounced() {
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async () => {
+    if (!currentUser) return;
     try {
-      await setDoc(canvasDocRef, { 
+      await canvasDocRef.set({ 
         grid,
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
         updatedBy: currentUser.email
       });
       updateLastSaved();
     } catch (error) {
-      console.error('Save error:', error);
+      console.error('Auto-save error:', error);
     }
   }, 500);
 }
 
 async function saveCanvas() {
+  if (!currentUser) {
+    alert('Please login first');
+    return;
+  }
+  
   try {
-    await setDoc(canvasDocRef, { 
+    await canvasDocRef.set({ 
       grid,
-      lastUpdated: new Date().toISOString(),
+      lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
       updatedBy: currentUser.email
     });
     updateLastSaved();
     alert('Canvas saved successfully!');
   } catch (error) {
     console.error('Save error:', error);
-    alert('Error saving canvas');
+    alert('Error saving canvas: ' + error.message);
   }
 }
 
 async function loadCanvas() {
+  if (!currentUser) {
+    alert('Please login first');
+    return;
+  }
+  
   try {
-    const snap = await getDoc(canvasDocRef);
-    if (snap.exists()) {
-      grid = snap.data().grid;
+    const doc = await canvasDocRef.get();
+    if (doc.exists) {
+      grid = doc.data().grid;
       renderGrid();
       alert('Canvas loaded successfully!');
     } else {
@@ -249,15 +266,17 @@ async function loadCanvas() {
     }
   } catch (error) {
     console.error('Load error:', error);
-    alert('Error loading canvas');
+    alert('Error loading canvas: ' + error.message);
   }
 }
 
 function setupRealtimeSync() {
-  unsubscribe = onSnapshot(canvasDocRef, (docSnap) => {
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      if (data.updatedBy !== currentUser.email) {
+  if (!currentUser) return;
+  
+  unsubscribe = canvasDocRef.onSnapshot((doc) => {
+    if (doc.exists) {
+      const data = doc.data();
+      if (data.updatedBy && data.updatedBy !== currentUser.email) {
         grid = data.grid;
         renderGrid();
       }
@@ -270,14 +289,16 @@ function setupRealtimeSync() {
 }
 
 async function initializeCanvas() {
+  if (!currentUser) return;
+  
   try {
-    const snap = await getDoc(canvasDocRef);
-    if (snap.exists()) {
-      grid = snap.data().grid;
+    const doc = await canvasDocRef.get();
+    if (doc.exists) {
+      grid = doc.data().grid;
     } else {
-      await setDoc(canvasDocRef, { 
+      await canvasDocRef.set({ 
         grid,
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
         updatedBy: currentUser.email
       });
     }
@@ -312,13 +333,14 @@ passwordInput.addEventListener('keypress', (e) => {
 });
 
 canvas.addEventListener('mousedown', (e) => {
+  if (!currentUser) return;
   drawing = true;
   const { r, c } = getCellFromEvent(e);
   paintAt(r, c, colorPicker.value);
 });
 
 canvas.addEventListener('mousemove', (e) => {
-  if (!drawing) return;
+  if (!drawing || !currentUser) return;
   const { r, c } = getCellFromEvent(e);
   paintAt(r, c, colorPicker.value);
 });
@@ -332,6 +354,7 @@ canvas.addEventListener('mouseleave', () => {
 });
 
 canvas.addEventListener('touchstart', (e) => {
+  if (!currentUser) return;
   e.preventDefault();
   drawing = true;
   const touch = e.touches[0];
@@ -340,8 +363,8 @@ canvas.addEventListener('touchstart', (e) => {
 });
 
 canvas.addEventListener('touchmove', (e) => {
+  if (!drawing || !currentUser) return;
   e.preventDefault();
-  if (!drawing) return;
   const touch = e.touches[0];
   const { r, c } = getCellFromEvent(touch);
   paintAt(r, c, colorPicker.value);
@@ -363,6 +386,11 @@ eraseBtn.addEventListener('click', () => {
 });
 
 clearBtn.addEventListener('click', async () => {
+  if (!currentUser) {
+    alert('Please login first');
+    return;
+  }
+  
   if (confirm('Are you sure you want to clear the entire canvas?')) {
     grid = Array.from({ length: rows }, () => Array(cols).fill('#081226'));
     renderGrid();
@@ -375,3 +403,6 @@ loadBtn.addEventListener('click', loadCanvas);
 
 // Initial render
 renderGrid();
+
+// Log Firebase status
+console.log('App initialized. Waiting for authentication...');
