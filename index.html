@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PixelPals - Collaborative Pixel Art</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎨 PixelPals</h1>
+      <div id="userInfo">
+        <span id="userEmail"></span>
+        <button id="logoutBtn" style="display:none;">Logout</button>
+      </div>
+    </header>
+
+    <div id="authModal" class="modal">
+      <div class="modal-content">
+        <h2>Welcome to PixelPals</h2>
+        <p>Create collaborative pixel art in real-time!</p>
+        <input type="email" id="email" placeholder="Email" />
+        <input type="password" id="password" placeholder="Password" />
+        <div class="auth-buttons">
+          <button id="loginBtn">Login</button>
+          <button id="signupBtn">Sign Up</button>
+        </div>
+        <p id="authError" class="error"></p>
+      </div>
+    </div>
+
+    <div id="appContent" style="display:none;">
+      <div class="toolbar">
+        <div class="tool-group">
+          <label for="colorPicker">Color</label>
+          <input type="color" id="colorPicker" value="#00ffcc" />
+        </div>
+        <div class="tool-group">
+          <label for="brushSize">Brush Size</label>
+          <input type="range" id="brushSize" min="1" max="10" value="2" />
+          <span id="brushSizeValue">2</span>
+        </div>
+        <button id="eraseBtn" class="tool-btn">🧹 Erase</button>
+        <button id="clearBtn" class="tool-btn danger">🗑️ Clear All</button>
+        <button id="saveBtn" class="tool-btn">💾 Save</button>
+        <button id="loadBtn" class="tool-btn">📁 Load</button>
+      </div>
+
+      <canvas id="pixelCanvas" width="512" height="512"></canvas>
+      
+      <div id="statusBar">
+        <span id="connectionStatus">🔴 Offline</span>
+        <span id="lastSaved"></span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+:root {
+  --bg-primary: #0a0e27;
+  --bg-secondary: #1a1f3a;
+  --bg-canvas: #081226;
+  --accent: #00ffcc;
+  --accent-hover: #00e6b8;
+  --danger: #ff4757;
+  --text: #e8ecf1;
+  --text-dim: #9ca3af;
+  --border: rgba(255, 255, 255, 0.08);
+  --shadow: rgba(0, 0, 0, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 900px;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+h1 {
+  font-size: 2rem;
+  background: linear-gradient(135deg, var(--accent), #00e6b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  margin: 0;
+  display: inline-block;
+}
+
+/* Fallback for browsers without text gradient support */
+@supports not (-webkit-background-clip: text) {
+  h1 {
+    background: none;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+  }
+}
+
+#userInfo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+#userEmail {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+/* Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--bg-secondary);
+  padding: 40px;
+  border-radius: 16px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.modal-content h2 {
+  margin-bottom: 10px;
+  color: var(--accent);
+}
+
+.modal-content p {
+  color: var(--text-dim);
+  margin-bottom: 30px;
+}
+
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.auth-buttons button {
+  flex: 1;
+}
+
+/* Toolbar Styles */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+  flex-wrap: wrap;
+}
+
+.tool-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tool-group label {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+input[type="color"] {
+  width: 50px;
+  height: 40px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+}
+
+input[type="range"] {
+  width: 100px;
+}
+
+#brushSizeValue {
+  min-width: 20px;
+  text-align: center;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+button {
+  padding: 10px 20px;
+  background: var(--accent);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 255, 204, 0.3);
+}
+
+.tool-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.tool-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.tool-btn.active {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.tool-btn.danger {
+  background: rgba(255, 71, 87, 0.1);
+  color: var(--danger);
+}
+
+.tool-btn.danger:hover {
+  background: var(--danger);
+  color: white;
+}
+
+/* Canvas Styles */
+#pixelCanvas {
+  display: block;
+  margin: 0 auto 20px;
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  cursor: crosshair;
+  box-shadow: 0 10px 30px var(--shadow);
+  background: var(--bg-canvas);
+}
+
+/* Status Bar */
+#statusBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+#connectionStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error {
+  color: var(--danger);
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .toolbar {
+    justify-content: center;
+  }
+  
+  #pixelCanvas {
+    width: 100%;
+    max-width: 512px;
+    height: auto;
+  }
+}
